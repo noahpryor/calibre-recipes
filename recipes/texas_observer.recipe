@@ -1,0 +1,24 @@
+import string, re
+
+from collections import OrderedDict
+
+
+from calibre import strftime
+from calibre.web.feeds.recipes import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import BeautifulSoup
+
+
+
+base_url = "https://www.texasobserver.org/all-articles/"
+
+class TexasObserver(BasicNewsRecipe):
+
+    title       = 'Texas Observer'
+    __author__  = 'Noah Pryor'
+    description = 'All articles from the Texas observer'
+    timefmt = '%Y-%m-%d'
+    needs_subscription = False
+    feeds= [('All Articles', 'https://www.texasobserver.org/feed/')]
+    # encoding = 'cp1252'
+    no_stylesheets = True
+    # extra_css = 'h1 {font: sans-serif large;}\n'

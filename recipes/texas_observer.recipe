@@ -16,9 +16,6 @@ class TexasObserver(BasicNewsRecipe):
     title       = 'Texas Observer'
     __author__  = 'Noah Pryor'
     description = 'All articles from the Texas observer'
-    timefmt = '%Y-%m-%d'
     needs_subscription = False
     feeds= [('All Articles', 'https://www.texasobserver.org/feed/')]
-    # encoding = 'cp1252'
     no_stylesheets = True
-    # extra_css = 'h1 {font: sans-serif large;}\n'

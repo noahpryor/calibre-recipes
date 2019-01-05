@@ -1,0 +1,79 @@
+import string, re
+
+from collections import OrderedDict
+
+
+from calibre import strftime
+from calibre.web.feeds.recipes import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import BeautifulSoup
+
+
+sections = [('US', '/us-world/us/'), ('World', '/us-world/world/'), ('Texas', '/local/texas/'), ('Houston', '/local/houston/'), ('Opinion', '/opinion/editorials/')]
+
+base_url = "https://www.houstonchronicle.com"
+
+class HoustonChroniclePaid(BasicNewsRecipe):
+
+    title       = 'Houston Chronicle'
+    __author__  = 'Noah Pryor'
+    description = 'Daily news from HoustonChronicle.com'
+    timefmt = '%Y-%m-%d'
+    needs_subscription = False
+    keep_only_tags = [dict(name='h1', attrs={'class': 'header-title'}), dict(name='section', attrs={'class': ['body']})]
+    # remove_tags_before = dict(id='article')
+    # remove_tags_after  = dict(id='article')
+    remove_tags = [dict(attrs={'class':['related-links', 'featured', 'asset_relatedlinks', 'gallery', 'ad-point', 'taboola-below-article-thumbnails']}),
+                dict(name=['footer'])]
+    # encoding = 'cp1252'
+    no_stylesheets = True
+    extra_css = 'h1 {font: sans-serif large;}\n'
+
+    # def get_browser(self):
+    #     br = BasicNewsRecipe.get_browser()
+    #     if self.username is not None and self.password is not None:
+    #         br.open('https://www.nytimes.com/auth/login')
+    #         br.select_form(name='login')
+    #         br['USERID']   = self.username
+    #         br['PASSWORD'] = self.password
+    #         br.submit()
+    #     return br
+
+    # def populate_article_metadata(article, soup, first):
+
+    #     meta_description = soup.find('meta', name='description')
+    #     meta_release_date = soup.find('meta', name='date.release')
+    #     article.title =  self.tag_to_string(soup.find('title'))
+    #     article.text_summary = meta_description
+    #     article.summary = meta_description
+
+
+    def parse_index(self):
+
+        feeds = []
+        timestampfmt = '%Y%m%d%H%M%S'
+
+
+        for item in sections:
+            section = item[0]
+            path = item[1]
+            self.log('starting parse_index: ' + section)
+            articles = []
+            soup = self.index_to_soup('https://www.houstonchronicle.com' + path)
+
+            headlines = soup.find("div", {'id':'content'}).findAll("h2", {'class': "headline"})
+            for h2 in headlines:
+                a = h2.find("a")
+                title = self.tag_to_string(a)
+                url = base_url + a['href']
+                articles.append({'title': title,'date': '-', 'url': url, 'description': '' })
+
+            feeds.append((section, articles))
+        self.log(feeds)
+        return feeds
+
+    #     refresh = soup.find('meta', {'http-equiv':'refresh'})
+    #     if refresh is None:
+    #         return soup
+    #     content = refresh.get('content').partition('=')[2]
+    #     raw = self.browser.open('https://www.nytimes.com'+content).read()
+    #     return BeautifulSoup(raw.decode('cp1252', 'replace'))

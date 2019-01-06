@@ -15,6 +15,7 @@ class TexasObserver(BasicNewsRecipe):
 
     title       = 'Texas Observer'
     __author__  = 'Noah Pryor'
+    oldest_article = 30
     description = 'All articles from the Texas observer'
     needs_subscription = False
     feeds= [('All Articles', 'https://www.texasobserver.org/feed/')]

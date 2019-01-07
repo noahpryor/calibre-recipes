@@ -10,12 +10,23 @@ class ScienceMag(BasicNewsRecipe):
 
     title       = 'Science Magazine'
     needs_subscription = True
-
+    publication_type = "magazine"
     __author__  = 'Noah Pryor'
     oldest_article = 30
-    description = 'The latest '
+    description = "Downloads the latest issue of ScienceMag"
     needs_subscription = True
     no_stylesheets = True
+    # auto_cleanup = True
+    keep_only_tags = [dict(id=['content-block-markup'])]
+    remove_tags = [
+        dict(name='div', attrs={'class': ['attrib', 'fig-caption attrib', 'article__expandable-area', 'contributors', 'highwire-figure-links']}),
+        dict(name='a', attrs={'class': ['highwire-figure-links']}),
+        dict(name="a", target="_blank"),
+        dict(name="ul", attrs={'class': ['highwire-figure-links']}),
+        dict(name="q")
+        ]
+    #
+    # remove_tags_after  = dict(id='article')
 
 
     def get_browser(self):
@@ -44,29 +55,45 @@ class ScienceMag(BasicNewsRecipe):
 
         issue_name = soup.find("meta", {"name": "DC.Title"})["content"]
         issue_date = soup.find("meta", {"name": "DC.Date"})["content"]
-        print("Section: " + issue_name)
+        self.cover_url = soup.find("meta", {"name": "citation_image"})["content"]
+        print("Issue: " + issue_name)
+        self.title = issue_name + " " + issue_date
+        # Iterate through the sections of the table of contents
+        # import code; code.interact(local=dict(globals(), **locals()))
+        table_of_contents = soup.find("ul", "issue-toc item-list")
+        contents = table_of_contents.find("li", "issue-toc-section issue-toc-section-contents")
+        sections = contents.find("ul", "toc-section item-list").contents
 
-        toc_items = soup.findAll("div", {"class": "toc-citation"})
-        print("Articles found: " + str(len(toc_items)))
-        for item in toc_items:
-            headline_link = item.find("a", {"class": "highwire-cite-linked-title"})
-            title = self.tag_to_string(headline_link)
-            print("Title + " + title)
-            full_text_path = base_url + headline_link['href'] + ".full"
+        print(str(len(sections)) + " sections found")
+        for section in sections:
+            section_name = self.tag_to_string(section.find("h2"))
+            if (section_name == "Reports") or (section_name == "Research Articles"):
+                print("skipping section " + section_name)
+                continue
 
-            # Doesn't always exist
-            description_element = item.find("div", {"class": "highwire-cite-snippet"})
-            description = ""
-            if description_element:
-                description = self.tag_to_string(description_element)
+            toc_items = section.findAll("div", {"class": "toc-citation"})
+            # print(section_name + " - articles found: " + str(len(toc_items)))
 
-            article = {'title': title, 'date': issue_date, 'url': full_text_path, 'description': description }
-            print(article)
+            articles = []
 
-            articles.append(article)
 
-            print(title)
+            for item in toc_items:
+                headline_link = item.find("a", {"class": "highwire-cite-linked-title"})
+                title = self.tag_to_string(headline_link)
+                full_text_path = base_url + headline_link['href'] + ".full"
 
-        feeds.append((issue_name, articles))
+                # Doesn't always exist
+                description_element = item.find("div", {"class": "highwire-cite-snippet"})
+                description = ""
+                if description_element:
+                    description = self.tag_to_string(description_element)
 
+                article = {'title': title, 'date': issue_date, 'url': full_text_path, 'description': description }
+
+                articles.append(article)
+
+            # print(title)
+
+            feeds.append((section_name, articles))
+        print feeds
         return feeds

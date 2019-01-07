@@ -4,8 +4,8 @@ Created as a gift - python is not my forte, crib from this with caution
 
 - [x] Houston Chronicle.com (paid version rather than free chron.com site)
 - [x] [Texas Observer](https://www.texasobserver.org/)
-- [ ] Aljazeera english
-- [ ] Science Magazine
+- [x] Aljazeera english
+- [x] Science Magazine (note: currently does handle special issue articles)
 
 
 ## Developing

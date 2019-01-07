@@ -1,0 +1,72 @@
+import string, re
+
+from collections import OrderedDict
+
+from calibre.web.feeds.recipes import BasicNewsRecipe
+from calibre.ebooks.BeautifulSoup import BeautifulSoup
+
+base_url = "http://science.sciencemag.org"
+class ScienceMag(BasicNewsRecipe):
+
+    title       = 'Science Magazine'
+    needs_subscription = True
+
+    __author__  = 'Noah Pryor'
+    oldest_article = 30
+    description = 'The latest '
+    needs_subscription = True
+    no_stylesheets = True
+
+
+    def get_browser(self):
+        br = BasicNewsRecipe.get_browser(self)
+        if self.username is not None and self.password is not None:
+            br.open('http://science.sciencemag.org/user/login?destination=/front')
+            print "Logging in"
+            # find the aas login link
+            url_regex=re.compile(".*signin\.aaas\.org.*")
+            login_link = br.find_link(url_regex=re.compile(".*signin\.aaas\.org.*"))
+            br.follow_link(login_link)
+            print("Logging in")
+            br.select_form(name='loginForm')
+            br['loginForm:username']   = self.username
+            br['loginForm:password'] = self.password
+            br.submit()
+
+            print("Redirect to " + br.geturl() + " after login")
+
+        return br
+
+    def parse_index(self):
+        soup = self.index_to_soup('http://science.sciencemag.org/content/current')
+        feeds = []
+        articles = []
+
+        issue_name = soup.find("meta", {"name": "DC.Title"})["content"]
+        issue_date = soup.find("meta", {"name": "DC.Date"})["content"]
+        print("Section: " + issue_name)
+
+        toc_items = soup.findAll("div", {"class": "toc-citation"})
+        print("Articles found: " + str(len(toc_items)))
+        for item in toc_items:
+            headline_link = item.find("a", {"class": "highwire-cite-linked-title"})
+            title = self.tag_to_string(headline_link)
+            print("Title + " + title)
+            full_text_path = base_url + headline_link['href'] + ".full"
+
+            # Doesn't always exist
+            description_element = item.find("div", {"class": "highwire-cite-snippet"})
+            description = ""
+            if description_element:
+                description = self.tag_to_string(description_element)
+
+            article = {'title': title, 'date': issue_date, 'url': full_text_path, 'description': description }
+            print(article)
+
+            articles.append(article)
+
+            print(title)
+
+        feeds.append((issue_name, articles))
+
+        return feeds
